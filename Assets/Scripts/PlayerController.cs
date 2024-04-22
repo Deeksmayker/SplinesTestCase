@@ -2,6 +2,7 @@ using Dreamteck.Splines;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
 using static UnityEngine.Mathf;
@@ -16,6 +17,7 @@ public class PlayerController : MonoBehaviour{
     [SerializeField] private LineRenderer brushPrefab;
     [SerializeField] private GameObject drawPanel;
     [SerializeField] private GameObject drawTextPanel;
+    [SerializeField] private GameObject deathPanel;
     [SerializeField] private Material dudeMaterial;
     
     [Header("Particles")]
@@ -25,8 +27,11 @@ public class PlayerController : MonoBehaviour{
     
     private float _brushHeightPointLimit, _brushWidthPointLimit;
     
+    private int _aliveCount;
+    
     private bool _gameStarted;
     private bool _win;
+    private bool _dead;
     private float _winTime;
     
     private GraphicRaycaster _uiRaycaster;
@@ -56,6 +61,7 @@ public class PlayerController : MonoBehaviour{
         _follower = GetComponent<SplineFollower>();
         
         _dudes = GetComponentsInChildren<Dude>().ToList();
+        _aliveCount = _dudes.Count;
         
         _brushHeightPointLimit = _drawPanelRectTransform.sizeDelta.y * 0.5f;
         _brushWidthPointLimit = _drawPanelRectTransform.sizeDelta.x * 0.5f;
@@ -72,23 +78,20 @@ public class PlayerController : MonoBehaviour{
             float sinValue = Sin(Time.time * 2) * 40;
             drawTextPanel.transform.localScale = new Vector3(cosValue * Sign(cosValue), cosValue * Sign(cosValue) * 0.5f, 1);
             drawTextPanel.transform.localEulerAngles = new Vector3(0, 0, sinValue);
-        } else{
+        } else if (!_dead){
             _follower.followSpeed = followSpeed;
         }
     
-        if (Input.GetKeyDown(KeyCode.Space)){
-            _follower.followSpeed = followSpeed;
-        }
-        if (Input.GetKeyDown(KeyCode.C)){
-            _follower.followSpeed = 0;
-        }
-        
-        if (_gameStarted){
+        if (_gameStarted && !_dead){
             UpdateDudes();
         }
     }
     
     private void UpdateDudes(){
+        if (_dead){
+            return;
+        }
+    
         if (_win){
             _winTime += Time.deltaTime;
         }
@@ -172,6 +175,7 @@ public class PlayerController : MonoBehaviour{
                 var particles = Instantiate(newDudeParticles, inactiveDude.transform);
                 particles.transform.localPosition = Vector3.up * 5;
                 _dudes.Add(inactiveDude);
+                _aliveCount++;
             }
         }
         
@@ -189,6 +193,13 @@ public class PlayerController : MonoBehaviour{
         var rb = dude.gameObject.AddComponent<Rigidbody>();
         rb.AddForce(-transform.forward * 3000);
         Destroy(dude.gameObject, 3);
+        
+        _aliveCount--;
+        if (_aliveCount <= 0){
+            deathPanel.SetActive(true);
+            _dead = true;
+            _follower.followSpeed = 0;
+        }
     }
     
     private void RearrangeDudes(LineRenderer brush){
@@ -274,6 +285,10 @@ public class PlayerController : MonoBehaviour{
         
         success = false;
         return Vector2.zero;
+    }
+    
+    public void RestartLevel(){
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
     
     private void OnDrawGizmosSelected(){
