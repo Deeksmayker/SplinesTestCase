@@ -3,12 +3,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using System.Linq;
 
 public class PlayerController : MonoBehaviour{
     [SerializeField] private float followSpeed = 5;
+    [SerializeField] private float dudesAreaWidth = 10;
+    [SerializeField] private float dudesAreaHeight = 10;
     
     [SerializeField] private LineRenderer brushPrefab;
     [SerializeField] private GameObject drawPanel;
+    
+    private float _brushHeightPointLimit, _brushWidthPointLimit;
     
     private GraphicRaycaster _uiRaycaster;
     private Canvas           _canvas;
@@ -23,7 +28,7 @@ public class PlayerController : MonoBehaviour{
 
     private SplineFollower _follower;
     
-    private Vector2 _drawPanelLastPosition;
+    private List<Dude> _dudes = new();
     
     private void Awake(){
         _uiRaycaster = FindObjectOfType<GraphicRaycaster>();
@@ -35,6 +40,11 @@ public class PlayerController : MonoBehaviour{
     
     private void Start(){
         _follower = GetComponent<SplineFollower>();
+        
+        _dudes = GetComponentsInChildren<Dude>().ToList();
+        
+        _brushHeightPointLimit = _drawPanelRectTransform.sizeDelta.y * 0.5f;
+        _brushWidthPointLimit = _drawPanelRectTransform.sizeDelta.x * 0.5f;
     }
     
     private void Update(){
@@ -46,19 +56,41 @@ public class PlayerController : MonoBehaviour{
         if (Input.GetKeyDown(KeyCode.C)){
             _follower.followSpeed = 0;
         }
+        
+        UpdateDudes();
     }
     
-    private void LateUpdate(){
-    /*
-        if (!_currentBrush){
+    private void UpdateDudes(){
+        for (int i = 0; i < _dudes.Count; i++){
+            Dude dude = _dudes[i];
+            if (dude.deadMan){
+                continue;
+            }
+            
+            dude.transform.localPosition = Vector3.Lerp(dude.transform.localPosition, dude.targetLocalPosition, Time.deltaTime * 10);
+        }
+    }
+    
+    private void RearrangeDudes(LineRenderer brush){
+        if (_dudes.Count <= 0){
             return;
         }
-        Vector2 drawPanelDelta = drawPanel.transform.position - _drawPanelLastPosition;
-        for (int i = 0; i < _currentBrush.positionCount; i++){
-            _currentBrush.SetPosition(i, _currentBrush.GetPosition(i) + drawPanelDelta);
+    
+        float pointsStep = (float)brush.positionCount / (float)_dudes.Count;
+        for (int i = 0; i < _dudes.Count; i++){
+            if (_dudes[i].deadMan){
+                continue;
+            }
+        
+            float targetLocalX =  Mathf.Lerp(-dudesAreaWidth * 0.5f,
+                                             dudesAreaWidth * 0.5f,
+                                             Mathf.InverseLerp(-_brushWidthPointLimit, _brushWidthPointLimit, brush.GetPosition((int)(i * pointsStep)).x));
+            float targetLocalZ =  Mathf.Lerp(-dudesAreaHeight * 0.5f,
+                                             dudesAreaHeight * 0.5f,
+                                             Mathf.InverseLerp(-_brushHeightPointLimit, _brushHeightPointLimit, brush.GetPosition((int)(i * pointsStep)).y));
+                                             
+             _dudes[i].targetLocalPosition = new Vector3(targetLocalX, 0, targetLocalZ);
         }
-        _drawPanelLastPosition = drawPanel.transform.position;
-        */
     }
     
     private void Drawing(){
@@ -79,6 +111,7 @@ public class PlayerController : MonoBehaviour{
             }
         }
         if (Input.GetKeyUp(KeyCode.Mouse0)){
+            RearrangeDudes(_currentBrush);
             Destroy(_currentBrush.gameObject);
             _currentBrush = null;
             _previousDrawPoint = Vector2.zero;
@@ -99,17 +132,22 @@ public class PlayerController : MonoBehaviour{
         
         for (int i = 0; i < results.Count; i++){
             if (results[i].gameObject.GetComponent<DrawPanel>()){
-                Debug.Log(results[i].screenPosition);
                 float scaleFactor = _canvas.scaleFactor;
             
                 success = true;
                 Vector2 halfScreenWidth = new Vector2(Screen.width * 0.5f, 0);
-                return (results[i].screenPosition - halfScreenWidth) / scaleFactor - new Vector2(0, _drawPanelRectTransform.sizeDelta.y * 0.5f);// - new Vector2(_drawPanelRectTransform.sizeDelta.x * 0.5f, _drawPanelRectTransform.sizeDelta.y * 0.5f);// - new Vector2(0, Screen.;// * 2;// + results[i].worldNormal * 0.05f;
+                return (results[i].screenPosition - halfScreenWidth) / scaleFactor - new Vector2(0, _drawPanelRectTransform.sizeDelta.y * 0.5f);
             }
         }
         
         success = false;
         return Vector2.zero;
-        //return Camera.main.ScreenToWorldPoint(Input.mousePosition);// + drawPanel.transform.position;// + drawPanel.transform.localPosition;
+    }
+    
+    private void OnDrawGizmosSelected(){
+        Gizmos.color = Color.red;
+		Gizmos.matrix = transform.localToWorldMatrix;
+
+        Gizmos.DrawWireCube(Vector3.zero, new Vector3(dudesAreaWidth, 2, dudesAreaHeight));
     }
 }
