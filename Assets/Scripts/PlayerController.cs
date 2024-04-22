@@ -15,6 +15,11 @@ public class PlayerController : MonoBehaviour{
     
     [SerializeField] private LineRenderer brushPrefab;
     [SerializeField] private GameObject drawPanel;
+    [SerializeField] private Material dudeMaterial;
+    
+    [Header("Particles")]
+    [SerializeField] private ParticleSystem newDudeParticles;
+    [SerializeField] private ParticleSystem bloodParticles;
     
     private float _brushHeightPointLimit, _brushWidthPointLimit;
     
@@ -79,7 +84,8 @@ public class PlayerController : MonoBehaviour{
             
             CalculateDudeCollisions(ref dude);
             
-            dude.transform.localPosition = Vector3.Lerp(dude.transform.localPosition, dude.targetLocalPosition, Time.deltaTime * 10);
+            dude.transform.localPosition = Vector3.Lerp(dude.transform.localPosition, dude.targetLocalPosition, Time.deltaTime * 3);
+            dude.transform.forward = transform.right;
         }
     }
     
@@ -87,6 +93,23 @@ public class PlayerController : MonoBehaviour{
         if (CheckSphere(dude.transform.position + dude.transform.up * dude.capsuleCollider.height * 0.5f, dude.capsuleCollider.radius, Layers.Obstacle)){
             KillDude(ref dude);
         }
+        
+        //@OPTIMIZATION required
+        Collider[] inactiveDudes = OverlapSphere(dude.transform.position + dude.transform.up * dude.capsuleCollider.height * 0.5f, dude.capsuleCollider.radius, Layers.InactiveDude);
+        for (int i = 0; i < inactiveDudes.Length; i++){
+            if (inactiveDudes[i].TryGetComponent<Dude>(out var inactiveDude)){
+                inactiveDude.gameObject.layer = LayerMask.NameToLayer("Dude");   
+                inactiveDude.transform.SetParent(transform, true);
+                //inactiveDude.transform.localPosition = dude.transform.localPosition;
+                inactiveDude.targetLocalPosition = dude.targetLocalPosition + dude.transform.forward * 2;
+                //inactiveDude.SetMaterial(dudeMaterial);
+                
+                var particles = Instantiate(newDudeParticles, inactiveDude.transform);
+                particles.transform.localPosition = Vector3.up * 5;
+                _dudes.Add(inactiveDude);
+            }
+        }
+        
     }
     
     public void KillDude(ref Dude dude){
@@ -94,6 +117,7 @@ public class PlayerController : MonoBehaviour{
             return;
         }
         
+        Instantiate(bloodParticles, dude.transform.position, Quaternion.identity);
         dude.deathParticles.Play();
         dude.deadMan = true;
         var rb = dude.gameObject.AddComponent<Rigidbody>();
@@ -127,9 +151,7 @@ public class PlayerController : MonoBehaviour{
         if (Input.GetKeyDown(KeyCode.Mouse0)){
             Vector2 touchPosition = DrawPanelWorldTouchPos(out bool success);
             if (success){
-                _currentBrush = Instantiate(brushPrefab, drawPanel.transform);
-                _currentBrush.positionCount = 1;
-                _currentBrush.SetPosition(0, touchPosition);
+                SpawnBrush(touchPosition);
                 AddDrawPoint(touchPosition);
                 _previousDrawPoint = touchPosition;
             }
@@ -137,6 +159,9 @@ public class PlayerController : MonoBehaviour{
         if (Input.GetKey(KeyCode.Mouse0)){
             Vector2 touchPosition = DrawPanelWorldTouchPos(out bool success);            
             if (success && (_previousDrawPoint == Vector2.zero || Vector2.Distance(touchPosition, _previousDrawPoint) >= 0.02f)){
+                if (!_currentBrush){
+                    SpawnBrush(touchPosition);              
+                }
                 AddDrawPoint(touchPosition);
                 _previousDrawPoint = touchPosition;
             }
@@ -147,6 +172,12 @@ public class PlayerController : MonoBehaviour{
             _currentBrush = null;
             _previousDrawPoint = Vector2.zero;
         }
+    }
+    
+    private void SpawnBrush(Vector2 position){
+        _currentBrush = Instantiate(brushPrefab, drawPanel.transform);
+        _currentBrush.positionCount = 1;
+        _currentBrush.SetPosition(0, position);
     }
     
     private void AddDrawPoint(Vector2 point){

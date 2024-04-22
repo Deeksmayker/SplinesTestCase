@@ -72,9 +72,9 @@ MonoBehaviour:
     useClippedPercent: 0
     keys: []
   _clipFromSample:
-    position: {x: -179.05386, y: -11.9873295, z: 10.132513}
+    position: {x: -179.40599, y: -1.1351564, z: 13.713526}
     up: {x: 0, y: 1, z: 0}
-    forward: {x: -0.938572, y: -0.1932834, z: 0.2858745}
+    forward: {x: -0.9395666, y: -0.01819973, z: 0.34188178}
     color: {r: 1, g: 1, b: 1, a: 1}
     size: 1
     percent: 0.19267892837524414
@@ -100,9 +100,9 @@ MonoBehaviour:
   _dontLerpDirection: 0
   _physicsMode: 0
   _motion:
-    _hasOffset: 0
+    _hasOffset: 1
     _hasRotationOffset: 0
-    _offset: {x: 0, y: 0}
+    _offset: {x: -16.56, y: 0}
     _rotationOffset: {x: 0, y: 0, z: 0}
     _baseScale: {x: 1, y: 1, z: 1}
     _2dMode: 0
@@ -121,21 +121,21 @@ MonoBehaviour:
     applyScaleX: 0
     applyScaleY: 0
     applyScaleZ: 0
-    targetUser: {fileID: 3668066988653136471}
+    targetUser: {fileID: 0}
   targetRigidbody: {fileID: 0}
   targetRigidbody2D: {fileID: 0}
   targetTransform: {fileID: 1621174423473511154}
   _result:
-    position: {x: -179.05386, y: -11.9873295, z: 10.132513}
+    position: {x: -179.40599, y: -1.1351564, z: 13.713526}
     up: {x: 0, y: 1, z: 0}
-    forward: {x: -0.938572, y: -0.1932834, z: 0.2858745}
+    forward: {x: -0.9395666, y: -0.01819973, z: 0.34188178}
     color: {r: 1, g: 1, b: 1, a: 1}
     size: 1
     percent: 0
   _finalResult:
-    position: {x: -179.05386, y: -11.9873295, z: 10.132513}
+    position: {x: -179.40599, y: -1.1351564, z: 13.713526}
     up: {x: 0, y: 1, z: 0}
-    forward: {x: -0.938572, y: -0.1932834, z: 0.2858745}
+    forward: {x: -0.9395666, y: -0.01819973, z: 0.34188178}
     color: {r: 1, g: 1, b: 1, a: 1}
     size: 1
     percent: 0
@@ -145,7 +145,7 @@ MonoBehaviour:
   _follow: 1
   _startPosition: 0
   preserveUniformSpeedWithOffset: 0
-  _followSpeed: 1
+  _followSpeed: 0
   _followDuration: 1
   _speedModifier:
     blend: 1

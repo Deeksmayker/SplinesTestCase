@@ -3,6 +3,7 @@ using UnityEngine;
 public class Spike : MonoBehaviour{
     [SerializeField] private Transform moveTarget;
     [SerializeField] private float cycleTime;
+    [SerializeField] private ParticleSystem impactParticles;
     private bool _movingUp;
     
     private Vector3 _startLocalPosition;
@@ -15,6 +16,10 @@ public class Spike : MonoBehaviour{
     }
     
     private void Update(){
+        if (Physics.CheckSphere(transform.position, 1, Layers.Dude) && Random.Range(0.0f, 1.0f) > 0.9f){
+            Instantiate(impactParticles, transform.position + Vector3.up, Quaternion.identity);
+        }
+    
         _timer += Time.deltaTime;
         
         if (_timer <= cycleTime){

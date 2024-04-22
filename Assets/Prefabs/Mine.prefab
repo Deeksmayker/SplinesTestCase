@@ -81,7 +81,7 @@ MonoBehaviour:
     size: 1
     percent: 1
   _loopSamples: 0
-  _clipFrom: 0.1062872224383884
+  _clipFrom: 0.10628722608089447
   _clipTo: 1
   animClipFrom: 0.10598778
   animClipTo: 1
@@ -121,16 +121,16 @@ MonoBehaviour:
   targetRigidbody2D: {fileID: 0}
   targetTransform: {fileID: 3428273515183933346}
   _result:
-    position: {x: -99.9552, y: -0.19294512, z: -2.0005805}
+    position: {x: -99.9552, y: -0.19294514, z: -2.0005805}
     up: {x: 0, y: 1, z: 0}
-    forward: {x: -0.9978189, y: -0.0058340426, z: 0.06575423}
+    forward: {x: -0.9978189, y: -0.005834043, z: 0.06575424}
     color: {r: 1, g: 1, b: 1, a: 1}
     size: 1
     percent: 0
   _finalResult:
-    position: {x: -99.9552, y: -0.19294512, z: -2.0005805}
+    position: {x: -99.9552, y: -0.19294514, z: -2.0005805}
     up: {x: 0, y: 1, z: 0}
-    forward: {x: -0.9978189, y: -0.0058340426, z: 0.06575423}
+    forward: {x: -0.9978189, y: -0.005834043, z: 0.06575424}
     color: {r: 1, g: 1, b: 1, a: 1}
     size: 1
     percent: 0
@@ -140,7 +140,7 @@ MonoBehaviour:
   _follow: 1
   _startPosition: 0
   preserveUniformSpeedWithOffset: 0
-  _followSpeed: 1
+  _followSpeed: 0
   _followDuration: 1
   _speedModifier:
     blend: 1
