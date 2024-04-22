@@ -15,13 +15,19 @@ public class PlayerController : MonoBehaviour{
     
     [SerializeField] private LineRenderer brushPrefab;
     [SerializeField] private GameObject drawPanel;
+    [SerializeField] private GameObject drawTextPanel;
     [SerializeField] private Material dudeMaterial;
     
     [Header("Particles")]
     [SerializeField] private ParticleSystem newDudeParticles;
     [SerializeField] private ParticleSystem bloodParticles;
+    [SerializeField] private ParticleSystem[] winParticles;
     
     private float _brushHeightPointLimit, _brushWidthPointLimit;
+    
+    private bool _gameStarted;
+    private bool _win;
+    private float _winTime;
     
     private GraphicRaycaster _uiRaycaster;
     private Canvas           _canvas;
@@ -53,10 +59,22 @@ public class PlayerController : MonoBehaviour{
         
         _brushHeightPointLimit = _drawPanelRectTransform.sizeDelta.y * 0.5f;
         _brushWidthPointLimit = _drawPanelRectTransform.sizeDelta.x * 0.5f;
+        
+        _follower.onEndReached += Win;   
     }
     
     private void Update(){
         Drawing();
+        
+        if (!_gameStarted){
+            _follower.followSpeed = 0;
+            float cosValue = Cos(Time.time * 3) * 1f + 0.5f;
+            float sinValue = Sin(Time.time * 2) * 40;
+            drawTextPanel.transform.localScale = new Vector3(cosValue * Sign(cosValue), cosValue * Sign(cosValue) * 0.5f, 1);
+            drawTextPanel.transform.localEulerAngles = new Vector3(0, 0, sinValue);
+        } else{
+            _follower.followSpeed = followSpeed;
+        }
     
         if (Input.GetKeyDown(KeyCode.Space)){
             _follower.followSpeed = followSpeed;
@@ -65,10 +83,16 @@ public class PlayerController : MonoBehaviour{
             _follower.followSpeed = 0;
         }
         
-        UpdateDudes();
+        if (_gameStarted){
+            UpdateDudes();
+        }
     }
     
     private void UpdateDudes(){
+        if (_win){
+            _winTime += Time.deltaTime;
+        }
+    
         for (int i = 0; i < _dudes.Count; i++){
             Dude dude = _dudes[i];
             
@@ -81,11 +105,52 @@ public class PlayerController : MonoBehaviour{
                 dude.transform.localScale = Vector3.Lerp(dude.transform.localScale, Vector3.zero, Time.deltaTime);
                 continue;
             }
-            
+            if (!_win){
+                dude.animator.SetBool("Running", true);
+            }
             CalculateDudeCollisions(ref dude);
             
             dude.transform.localPosition = Vector3.Lerp(dude.transform.localPosition, dude.targetLocalPosition, Time.deltaTime * 3);
-            dude.transform.forward = transform.right;
+            float rotationMultiplier = 1;
+            if (_win){
+                rotationMultiplier = -1;
+            }
+            dude.transform.forward = transform.right * rotationMultiplier;
+            
+            if (_win){
+                if (_winTime >= 6){
+                    dude.transform.Rotate(new Vector3(0, 40, 0) * Time.deltaTime);
+                    dude.transform.localScale = Vector3.Lerp(dude.transform.localScale, Vector3.zero, Time.deltaTime * 4);
+                }
+            }
+        }
+    }
+    
+    private void Win(double aboba){
+        if (_win){
+            return;
+        }
+    
+        _win = true;
+        
+        float spacing = 4;
+        int row = 0;
+        
+        for (int i = 0; i < winParticles.Length; i++){
+            winParticles[i].gameObject.SetActive(true);
+            winParticles[i].Play();
+        }
+        
+        for (int i = 0; i < _dudes.Count; i++){
+            //_dudes[i].transform.forward = -transform.right;
+            _dudes[i].animator.SetBool("Win", true);
+            float targetLocalZ = dudesAreaHeight - row * spacing;
+            float targetLocalX = -dudesAreaWidth * 0.5f + i * spacing - row * dudesAreaWidth;
+            _dudes[i].targetLocalPosition = new Vector3(targetLocalX, 0, targetLocalZ);
+            
+            if (i * spacing - row * dudesAreaWidth >= dudesAreaWidth - spacing){
+                row++;
+            }
         }
     }
     
@@ -117,6 +182,7 @@ public class PlayerController : MonoBehaviour{
             return;
         }
         
+        dude.animator.SetBool("Death", true);
         Instantiate(bloodParticles, dude.transform.position, Quaternion.identity);
         dude.deathParticles.Play();
         dude.deadMan = true;
@@ -126,7 +192,7 @@ public class PlayerController : MonoBehaviour{
     }
     
     private void RearrangeDudes(LineRenderer brush){
-        if (_dudes.Count <= 0){
+        if (_dudes.Count <= 0 || _win){
             return;
         }
     
@@ -167,6 +233,10 @@ public class PlayerController : MonoBehaviour{
             }
         }
         if (Input.GetKeyUp(KeyCode.Mouse0) && _currentBrush){
+            if (!_gameStarted){
+                _gameStarted = true;
+                drawTextPanel.SetActive(false);            
+            }
             RearrangeDudes(_currentBrush);
             Destroy(_currentBrush.gameObject);
             _currentBrush = null;

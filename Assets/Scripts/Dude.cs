@@ -1,6 +1,8 @@
 using UnityEngine;
 
 public class Dude : MonoBehaviour{
+    public Animator animator;
+
     public ParticleSystem deathParticles;
     public CapsuleCollider capsuleCollider;
     public bool deadMan;
@@ -13,6 +15,7 @@ public class Dude : MonoBehaviour{
     private void Awake(){
         targetLocalPosition = transform.localPosition;
         capsuleCollider = GetComponent<CapsuleCollider>();
+        animator = GetComponentInChildren<Animator>();
         
         _meshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
     }
