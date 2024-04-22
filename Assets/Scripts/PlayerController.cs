@@ -4,6 +4,9 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Linq;
+using static UnityEngine.Mathf;
+using static UnityEngine.Physics;
+using static Utils;
 
 public class PlayerController : MonoBehaviour{
     [SerializeField] private float followSpeed = 5;
@@ -63,12 +66,39 @@ public class PlayerController : MonoBehaviour{
     private void UpdateDudes(){
         for (int i = 0; i < _dudes.Count; i++){
             Dude dude = _dudes[i];
-            if (dude.deadMan){
+            
+            if (dude == null){
+                _dudes.RemoveAt(i);
                 continue;
             }
             
+            if (dude.deadMan){
+                dude.transform.localScale = Vector3.Lerp(dude.transform.localScale, Vector3.zero, Time.deltaTime);
+                continue;
+            }
+            
+            CalculateDudeCollisions(ref dude);
+            
             dude.transform.localPosition = Vector3.Lerp(dude.transform.localPosition, dude.targetLocalPosition, Time.deltaTime * 10);
         }
+    }
+    
+    private void CalculateDudeCollisions(ref Dude dude){
+        if (CheckSphere(dude.transform.position + dude.transform.up * dude.capsuleCollider.height * 0.5f, dude.capsuleCollider.radius, Layers.Obstacle)){
+            KillDude(ref dude);
+        }
+    }
+    
+    public void KillDude(ref Dude dude){
+        if (dude.deadMan){
+            return;
+        }
+        
+        dude.deathParticles.Play();
+        dude.deadMan = true;
+        var rb = dude.gameObject.AddComponent<Rigidbody>();
+        rb.AddForce(-transform.forward * 3000);
+        Destroy(dude.gameObject, 3);
     }
     
     private void RearrangeDudes(LineRenderer brush){
@@ -95,10 +125,11 @@ public class PlayerController : MonoBehaviour{
     
     private void Drawing(){
         if (Input.GetKeyDown(KeyCode.Mouse0)){
-            _currentBrush = Instantiate(brushPrefab, drawPanel.transform);
-            _currentBrush.positionCount = 0;
             Vector2 touchPosition = DrawPanelWorldTouchPos(out bool success);
             if (success){
+                _currentBrush = Instantiate(brushPrefab, drawPanel.transform);
+                _currentBrush.positionCount = 1;
+                _currentBrush.SetPosition(0, touchPosition);
                 AddDrawPoint(touchPosition);
                 _previousDrawPoint = touchPosition;
             }
@@ -110,7 +141,7 @@ public class PlayerController : MonoBehaviour{
                 _previousDrawPoint = touchPosition;
             }
         }
-        if (Input.GetKeyUp(KeyCode.Mouse0)){
+        if (Input.GetKeyUp(KeyCode.Mouse0) && _currentBrush){
             RearrangeDudes(_currentBrush);
             Destroy(_currentBrush.gameObject);
             _currentBrush = null;

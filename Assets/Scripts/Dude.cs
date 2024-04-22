@@ -1,6 +1,7 @@
 using UnityEngine;
 
 public class Dude : MonoBehaviour{
+    public ParticleSystem deathParticles;
     public CapsuleCollider capsuleCollider;
     public bool deadMan;
     
@@ -11,5 +12,7 @@ public class Dude : MonoBehaviour{
     private void Awake(){
         targetLocalPosition = transform.localPosition;
         capsuleCollider = GetComponent<CapsuleCollider>();
+        //deathParticles = GetComponentInChildren<ParticleSystem>();
+        //deathParticles.Stop();
     }
 }
