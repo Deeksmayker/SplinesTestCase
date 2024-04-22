@@ -10,19 +10,27 @@ public class PlayerController : MonoBehaviour{
     [SerializeField] private LineRenderer brushPrefab;
     [SerializeField] private GameObject drawPanel;
     
-    GraphicRaycaster _uiRaycaster;
-    EventSystem _eventSystem;
+    private GraphicRaycaster _uiRaycaster;
+    private Canvas           _canvas;
+    private EventSystem      _eventSystem;
     
-    PointerEventData _pointerEventData;
+    private RectTransform _drawPanelRectTransform;
     
-    private Vector3 _previousDrawPoint;
+    private PointerEventData _pointerEventData;
+    
+    private Vector2 _previousDrawPoint;
     private LineRenderer _currentBrush;
 
     private SplineFollower _follower;
     
+    private Vector2 _drawPanelLastPosition;
+    
     private void Awake(){
         _uiRaycaster = FindObjectOfType<GraphicRaycaster>();
+        _canvas      = FindObjectOfType<Canvas>();
         _eventSystem = FindObjectOfType<EventSystem>();
+        
+        _drawPanelRectTransform = drawPanel.GetComponent<RectTransform>();
     }
     
     private void Start(){
@@ -40,19 +48,32 @@ public class PlayerController : MonoBehaviour{
         }
     }
     
+    private void LateUpdate(){
+    /*
+        if (!_currentBrush){
+            return;
+        }
+        Vector2 drawPanelDelta = drawPanel.transform.position - _drawPanelLastPosition;
+        for (int i = 0; i < _currentBrush.positionCount; i++){
+            _currentBrush.SetPosition(i, _currentBrush.GetPosition(i) + drawPanelDelta);
+        }
+        _drawPanelLastPosition = drawPanel.transform.position;
+        */
+    }
+    
     private void Drawing(){
         if (Input.GetKeyDown(KeyCode.Mouse0)){
-            _currentBrush = Instantiate(brushPrefab);
+            _currentBrush = Instantiate(brushPrefab, drawPanel.transform);
             _currentBrush.positionCount = 0;
-            Vector3 touchPosition = DrawPanelWorldTouchPos(out bool success);
+            Vector2 touchPosition = DrawPanelWorldTouchPos(out bool success);
             if (success){
                 AddDrawPoint(touchPosition);
                 _previousDrawPoint = touchPosition;
             }
         }
         if (Input.GetKey(KeyCode.Mouse0)){
-            Vector3 touchPosition = DrawPanelWorldTouchPos(out bool success);            
-            if (success && (_previousDrawPoint == Vector3.zero || Vector3.Distance(touchPosition, _previousDrawPoint) >= 0.02f)){
+            Vector2 touchPosition = DrawPanelWorldTouchPos(out bool success);            
+            if (success && (_previousDrawPoint == Vector2.zero || Vector2.Distance(touchPosition, _previousDrawPoint) >= 0.02f)){
                 AddDrawPoint(touchPosition);
                 _previousDrawPoint = touchPosition;
             }
@@ -60,16 +81,16 @@ public class PlayerController : MonoBehaviour{
         if (Input.GetKeyUp(KeyCode.Mouse0)){
             Destroy(_currentBrush.gameObject);
             _currentBrush = null;
-            _previousDrawPoint = Vector3.zero;
+            _previousDrawPoint = Vector2.zero;
         }
     }
     
-    private void AddDrawPoint(Vector3 point){
+    private void AddDrawPoint(Vector2 point){
         _currentBrush.positionCount++;
         _currentBrush.SetPosition(_currentBrush.positionCount-1, point);
     }
     
-    private Vector3 DrawPanelWorldTouchPos(out bool success){
+    private Vector2 DrawPanelWorldTouchPos(out bool success){
         _pointerEventData = new PointerEventData(_eventSystem);
         _pointerEventData.position = Input.mousePosition;
         
@@ -78,13 +99,17 @@ public class PlayerController : MonoBehaviour{
         
         for (int i = 0; i < results.Count; i++){
             if (results[i].gameObject.GetComponent<DrawPanel>()){
+                Debug.Log(results[i].screenPosition);
+                float scaleFactor = _canvas.scaleFactor;
+            
                 success = true;
-                return results[i].worldPosition + results[i].worldNormal * 0.01f;
+                Vector2 halfScreenWidth = new Vector2(Screen.width * 0.5f, 0);
+                return (results[i].screenPosition - halfScreenWidth) / scaleFactor - new Vector2(0, _drawPanelRectTransform.sizeDelta.y * 0.5f);// - new Vector2(_drawPanelRectTransform.sizeDelta.x * 0.5f, _drawPanelRectTransform.sizeDelta.y * 0.5f);// - new Vector2(0, Screen.;// * 2;// + results[i].worldNormal * 0.05f;
             }
         }
         
         success = false;
-        return Vector3.zero;
+        return Vector2.zero;
         //return Camera.main.ScreenToWorldPoint(Input.mousePosition);// + drawPanel.transform.position;// + drawPanel.transform.localPosition;
     }
 }
