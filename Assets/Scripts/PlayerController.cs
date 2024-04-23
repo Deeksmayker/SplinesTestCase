@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour{
     [SerializeField] private GameObject drawPanel;
     [SerializeField] private GameObject drawTextPanel;
     [SerializeField] private GameObject deathPanel;
+    [SerializeField] private Text gemCountTextMesh;
     [SerializeField] private Material dudeMaterial;
     
     [Header("Particles")]
@@ -26,6 +27,8 @@ public class PlayerController : MonoBehaviour{
     [SerializeField] private ParticleSystem[] winParticles;
     
     private float _brushHeightPointLimit, _brushWidthPointLimit;
+    
+    private int _gemCount;
     
     private int _aliveCount;
     
@@ -50,6 +53,7 @@ public class PlayerController : MonoBehaviour{
     private List<Dude> _dudes = new();
     
     private void Awake(){
+        gemCountTextMesh.text = "0";
         _uiRaycaster = FindObjectOfType<GraphicRaycaster>();
         _canvas      = FindObjectOfType<Canvas>();
         _eventSystem = FindObjectOfType<EventSystem>();
@@ -285,6 +289,11 @@ public class PlayerController : MonoBehaviour{
         
         success = false;
         return Vector2.zero;
+    }
+    
+    public void AddMoney(){
+        _gemCount++;
+        gemCountTextMesh.text = _gemCount.ToString();
     }
     
     public void RestartLevel(){
